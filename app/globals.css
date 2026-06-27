@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #0a0e1a;
+  --color-bg2: #121829;
+  --color-panel: #171f33;
+  --color-panel2: #1f2942;
+  --color-line: #2a3654;
+  --color-ink: #e8edf7;
+  --color-muted: #94a3c4;
+  --color-brand: #22d3ee;
+  --color-brand2: #a78bfa;
+  --color-gold: #fde047;
+}
+
+html,
+body {
+  background:
+    radial-gradient(1200px 600px at 50% -10%, #1b2444, #0a0e1a) no-repeat;
+  background-color: var(--color-bg);
+  color: var(--color-ink);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Faixa do medidor de overall */
+.meter {
+  height: 10px;
+  background: #0d1322;
+  border-radius: 999px;
+  overflow: hidden;
+}
+.meter > i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #34d399, #22d3ee);
+  transition: width 0.5s ease;
+}
+
+/* Botão com gradiente da marca */
+.btn-brand {
+  background: linear-gradient(135deg, var(--color-brand), var(--color-brand2));
+  color: #0a0e1a;
+}
+.btn-brand:hover {
+  filter: brightness(1.08);
+}
+
+/* Esconde scrollbar feia mantendo o scroll */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2a3654 transparent;
+}

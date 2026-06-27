@@ -1,0 +1,232 @@
+import { create } from "zustand";
+import {
+  buildGrid,
+  dailyDraw,
+  getDailyScenario,
+  getDailySeed,
+  getPuzzleNumber,
+  getTodayKey,
+  saveDailyRecord,
+  updateStreak,
+} from "./daily";
+import { CARDS, MODES, SCENARIOS } from "./data";
+import { affinityMatch, simulate } from "./game";
+import { saveScore } from "./leaderboard";
+import type {
+  Card,
+  DailyRecord,
+  GameMode,
+  Scenario,
+  SimulationResult,
+} from "./types";
+import { clamp, randItem } from "./utils";
+
+type Screen = "scenario" | "game" | "result";
+
+interface GameState {
+  screen: Screen;
+
+  // Seleção
+  selectedScenarioId: number | null;
+  selectedModeId: GameMode["id"] | null;
+
+  // Partida em andamento
+  phase: Scenario | null;
+  mode: GameMode | null;
+  rerolls: number;
+  current: Card | null;
+  spinning: boolean;
+  slots: (Card | null)[];
+
+  // Desafio diário
+  daily: boolean;
+  seed: number;
+  drawCount: number;
+  dailyRecord: DailyRecord | null;
+  dailyStreak: number;
+
+  // Resultado
+  result: SimulationResult | null;
+
+  // Ações
+  selectScenario: (id: number) => void;
+  selectMode: (id: GameMode["id"]) => void;
+  startGame: () => void;
+  startDaily: () => void;
+  spin: () => void;
+  reroll: () => void;
+  placeCard: (index: number) => boolean;
+  runSimulation: () => void;
+  nextPhase: () => void;
+  goToScenarioSelect: () => void;
+}
+
+const EMPTY_SLOTS: (Card | null)[] = [null, null, null, null, null];
+
+function randomDraw(chaos: boolean): Card {
+  const card = { ...randItem(CARDS) };
+  if (chaos) {
+    const jitter = Math.floor(Math.random() * 41) - 20; // -20..+20
+    card.ov = clamp(card.ov + jitter, 0, 100);
+  }
+  return card;
+}
+
+export const useGame = create<GameState>((set, get) => ({
+  screen: "scenario",
+  selectedScenarioId: null,
+  selectedModeId: null,
+  phase: null,
+  mode: null,
+  rerolls: 0,
+  current: null,
+  spinning: false,
+  slots: [...EMPTY_SLOTS],
+  daily: false,
+  seed: 0,
+  drawCount: 0,
+  dailyRecord: null,
+  dailyStreak: 0,
+  result: null,
+
+  selectScenario: (id) => set({ selectedScenarioId: id }),
+  selectMode: (id) => set({ selectedModeId: id }),
+
+  startGame: () => {
+    const { selectedScenarioId, selectedModeId } = get();
+    if (selectedScenarioId == null || selectedModeId == null) return;
+    const scn = SCENARIOS.find((s) => s.id === selectedScenarioId);
+    const mode = MODES.find((m) => m.id === selectedModeId);
+    if (!scn || !mode) return;
+    set({
+      screen: "game",
+      phase: scn,
+      mode,
+      rerolls: mode.rerolls,
+      current: null,
+      slots: [...EMPTY_SLOTS],
+      result: null,
+      daily: false,
+      drawCount: 0,
+      dailyRecord: null,
+    });
+  },
+
+  startDaily: () => {
+    const dateKey = getTodayKey();
+    const scn = getDailyScenario(dateKey);
+    const mode = MODES.find((m) => m.id === "classico")!;
+    set({
+      screen: "game",
+      phase: scn,
+      mode,
+      rerolls: mode.rerolls,
+      current: null,
+      slots: [...EMPTY_SLOTS],
+      result: null,
+      daily: true,
+      seed: getDailySeed(dateKey),
+      drawCount: 0,
+      dailyRecord: null,
+    });
+  },
+
+  spin: () => {
+    const s = get();
+    if (!s.mode || s.spinning || s.current) return;
+    if (s.slots.every(Boolean)) return;
+    const card = s.daily ? dailyDraw(s.seed, s.drawCount) : randomDraw(s.mode.chaos);
+    set({
+      spinning: true,
+      current: card,
+      drawCount: s.daily ? s.drawCount + 1 : s.drawCount,
+    });
+    setTimeout(() => set({ spinning: false }), 600);
+  },
+
+  reroll: () => {
+    const s = get();
+    if (s.rerolls <= 0 || !s.current || !s.mode || s.spinning) return;
+    const card = s.daily ? dailyDraw(s.seed, s.drawCount) : randomDraw(s.mode.chaos);
+    set({
+      rerolls: s.rerolls - 1,
+      spinning: true,
+      current: card,
+      drawCount: s.daily ? s.drawCount + 1 : s.drawCount,
+    });
+    setTimeout(() => set({ spinning: false }), 600);
+  },
+
+  placeCard: (index) => {
+    const { current, slots } = get();
+    if (!current || slots[index]) return false;
+    const next = [...slots];
+    next[index] = current;
+    set({ slots: next, current: null });
+    return true;
+  },
+
+  runSimulation: () => {
+    const { slots, phase, mode, daily } = get();
+    if (!phase || !mode || !slots.every(Boolean)) return;
+    const cards = slots as Card[];
+    const result = simulate(cards, phase);
+
+    if (daily) {
+      const dateKey = getTodayKey();
+      const matched = cards.map((c, i) => affinityMatch(c, i));
+      const record: DailyRecord = {
+        date: dateKey,
+        puzzle: getPuzzleNumber(dateKey),
+        win: result.win,
+        total: result.total,
+        grid: buildGrid(cards, matched),
+        combos: result.combos.map((c) => c.name),
+        scn: `${phase.flag} ${phase.sel} ${phase.ano}`,
+      };
+      saveDailyRecord(record);
+      const streak = updateStreak(dateKey);
+      set({ screen: "result", result, dailyRecord: record, dailyStreak: streak });
+    } else {
+      saveScore({
+        scn: `${phase.flag} ${phase.sel} ${phase.ano}`,
+        score: result.total,
+        win: result.win,
+        mode: mode.nome,
+        date: Date.now(),
+      });
+      set({ screen: "result", result });
+    }
+  },
+
+  nextPhase: () => {
+    const { phase, mode, daily } = get();
+    if (daily || !phase?.next || !mode) {
+      get().goToScenarioSelect();
+      return;
+    }
+    set({
+      screen: "game",
+      phase: phase.next,
+      rerolls: mode.rerolls,
+      current: null,
+      slots: [...EMPTY_SLOTS],
+      result: null,
+    });
+  },
+
+  goToScenarioSelect: () =>
+    set({
+      screen: "scenario",
+      selectedScenarioId: null,
+      selectedModeId: null,
+      phase: null,
+      mode: null,
+      current: null,
+      slots: [...EMPTY_SLOTS],
+      result: null,
+      daily: false,
+      drawCount: 0,
+      dailyRecord: null,
+    }),
+}));
