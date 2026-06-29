@@ -1,53 +1,74 @@
 @import "tailwindcss";
 
+/* Habilita dark mode por classe (.dark no <html>) */
+@variant dark (&:where(.dark, .dark *));
+
+/* ── Tema claro (padrão) ────────────────────────────────────────────── */
 @theme {
-  --color-bg: #0a0e1a;
-  --color-bg2: #121829;
-  --color-panel: #171f33;
-  --color-panel2: #1f2942;
-  --color-line: #2a3654;
-  --color-ink: #e8edf7;
-  --color-muted: #94a3c4;
-  --color-brand: #22d3ee;
-  --color-brand2: #a78bfa;
-  --color-gold: #fde047;
+  --color-bg:     #f8fafc;
+  --color-bg2:    #f1f5f9;
+  --color-panel:  #ffffff;
+  --color-panel2: #f8fafc;
+  --color-line:   #e2e8f0;
+  --color-ink:    #0f172a;
+  --color-muted:  #64748b;
+  --color-brand:  #16a34a;
+  --color-brand2: #2563eb;
+  --color-gold:   #d97706;
 }
 
-html,
-body {
-  background:
-    radial-gradient(1200px 600px at 50% -10%, #1b2444, #0a0e1a) no-repeat;
+html, body {
   background-color: var(--color-bg);
   color: var(--color-ink);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-/* Faixa do medidor de overall */
+/* ── Tema escuro ────────────────────────────────────────────────────── */
+.dark {
+  --color-bg:     #0a0e1a;
+  --color-bg2:    #121829;
+  --color-panel:  #171f33;
+  --color-panel2: #1f2942;
+  --color-line:   #2a3654;
+  --color-ink:    #e8edf7;
+  --color-muted:  #94a3c4;
+  --color-brand:  #22d3ee;
+  --color-brand2: #a78bfa;
+  --color-gold:   #fde047;
+}
+
+/* ── Barra de overall ───────────────────────────────────────────────── */
 .meter {
-  height: 10px;
-  background: #0d1322;
+  height: 6px;
+  background: #e2e8f0;
   border-radius: 999px;
   overflow: hidden;
 }
+.dark .meter { background: #2a3654; }
+
 .meter > i {
   display: block;
   height: 100%;
-  background: linear-gradient(90deg, #34d399, #22d3ee);
+  background: linear-gradient(90deg, #16a34a, #22c55e);
   transition: width 0.5s ease;
 }
+.dark .meter > i { background: linear-gradient(90deg, #22d3ee, #a78bfa); }
 
-/* Botão com gradiente da marca */
+/* ── Botão primário ─────────────────────────────────────────────────── */
 .btn-brand {
-  background: linear-gradient(135deg, var(--color-brand), var(--color-brand2));
-  color: #0a0e1a;
+  background: #16a34a;
+  color: #ffffff;
 }
-.btn-brand:hover {
-  filter: brightness(1.08);
-}
+.btn-brand:hover { background: #15803d; }
 
-/* Esconde scrollbar feia mantendo o scroll */
+.dark .btn-brand { background: #22d3ee; color: #0a0e1a; }
+.dark .btn-brand:hover { filter: brightness(1.08); }
+
+/* ── Scrollbar ──────────────────────────────────────────────────────── */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #2a3654 transparent;
+  scrollbar-color: #e2e8f0 transparent;
 }
+.dark * { scrollbar-color: #2a3654 transparent; }

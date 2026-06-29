@@ -1,4 +1,4 @@
-import { AFFINITY_BONUS, SLOTS } from "./data";
+import { AFFINITY_BONUS, MAX_BASE, SLOTS } from "./data";
 import type {
   Card,
   Category,
@@ -6,14 +6,15 @@ import type {
   NarrativeLine,
   Scenario,
   SimulationResult,
+  Slot,
 } from "./types";
 
 /** Indica se a carta combina com a afinidade do slot na posição dada. */
-export function affinityMatch(card: Card, slotIndex: number): boolean {
-  return SLOTS[slotIndex]?.affinity.includes(card.cat) ?? false;
+export function affinityMatch(card: Card, slotIndex: number, slots: Slot[] = SLOTS): boolean {
+  return slots[slotIndex]?.affinity.includes(card.cat) ?? false;
 }
 
-/** Calcula os combos ativos para um conjunto de 5 cartas. */
+/** Calcula os combos ativos para um conjunto de 12 cartas. */
 export function computeCombos(cards: Card[]): {
   combos: ComboBonus[];
   total: number;
@@ -24,15 +25,20 @@ export function computeCombos(cards: Card[]): {
   const distinct = counts.size;
 
   const combos: ComboBonus[] = [];
-  if (max >= 5) {
-    combos.push({ name: "Time Unido", value: 60, desc: "5 cartas da mesma categoria" });
-  } else if (max === 4) {
-    combos.push({ name: "Entrosamento Total", value: 40, desc: "4 cartas da mesma categoria" });
-  } else if (max === 3) {
-    combos.push({ name: "Entrosamento", value: 25, desc: "3 cartas da mesma categoria" });
+  if (max >= 8) {
+    combos.push({ name: "Time Unido", value: 120, desc: "8+ cartas da mesma categoria" });
+  } else if (max >= 6) {
+    combos.push({ name: "Entrosamento Total", value: 80, desc: "6+ cartas da mesma categoria" });
+  } else if (max >= 4) {
+    combos.push({ name: "Entrosamento", value: 50, desc: "4+ cartas da mesma categoria" });
+  } else if (max >= 3) {
+    combos.push({ name: "Sintonia", value: 25, desc: "3 cartas da mesma categoria" });
   }
-  if (distinct === 5) {
-    combos.push({ name: "Time Versátil", value: 30, desc: "Uma carta de cada categoria" });
+  if (distinct >= 5) {
+    combos.push({ name: "Time Versátil", value: 60, desc: "5+ categorias diferentes" });
+  }
+  if (distinct === 6) {
+    combos.push({ name: "Versatilidade Máxima", value: 40, desc: "Todas as 6 categorias presentes" });
   }
 
   const total = combos.reduce((acc, c) => acc + c.value, 0);
@@ -45,18 +51,18 @@ export function computeCombos(cards: Card[]): {
  *  - bônus de afinidade (carta na categoria certa do slot)
  *  - bônus de combos
  */
-export function simulate(cards: Card[], scenario: Scenario): SimulationResult {
+export function simulate(cards: Card[], scenario: Scenario, slots: Slot[] = SLOTS): SimulationResult {
   const base = cards.reduce((acc, c) => acc + c.ov, 0);
 
   let affinityBonus = 0;
   cards.forEach((c, i) => {
-    if (affinityMatch(c, i)) affinityBonus += AFFINITY_BONUS;
+    if (affinityMatch(c, i, slots)) affinityBonus += AFFINITY_BONUS;
   });
 
   const { combos, total: comboBonus } = computeCombos(cards);
 
   const total = base + affinityBonus + comboBonus;
-  const target = scenario.diff * 5;
+  const target = Math.round((scenario.diff / 100) * MAX_BASE);
   const win = total >= target;
 
   const margin = total - target;

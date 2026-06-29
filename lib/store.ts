@@ -9,7 +9,7 @@ import {
   saveDailyRecord,
   updateStreak,
 } from "./daily";
-import { CARDS, MODES, SCENARIOS } from "./data";
+import { CARDS, MODES, SCENARIOS, getFormationSlots } from "./data";
 import { affinityMatch, simulate } from "./game";
 import { saveScore } from "./leaderboard";
 import type {
@@ -21,7 +21,7 @@ import type {
 } from "./types";
 import { clamp, randItem } from "./utils";
 
-type Screen = "scenario" | "game" | "result";
+type Screen = "home" | "scenario" | "game" | "result";
 
 interface GameState {
   screen: Screen;
@@ -48,9 +48,13 @@ interface GameState {
   // Resultado
   result: SimulationResult | null;
 
+  // Formação
+  formationId: string;
+
   // Ações
   selectScenario: (id: number) => void;
   selectMode: (id: GameMode["id"]) => void;
+  selectFormation: (id: string) => void;
   startGame: () => void;
   startDaily: () => void;
   spin: () => void;
@@ -59,9 +63,10 @@ interface GameState {
   runSimulation: () => void;
   nextPhase: () => void;
   goToScenarioSelect: () => void;
+  goToHome: () => void;
 }
 
-const EMPTY_SLOTS: (Card | null)[] = [null, null, null, null, null];
+const EMPTY_SLOTS: (Card | null)[] = Array(12).fill(null);
 
 function randomDraw(chaos: boolean): Card {
   const card = { ...randItem(CARDS) };
@@ -73,7 +78,7 @@ function randomDraw(chaos: boolean): Card {
 }
 
 export const useGame = create<GameState>((set, get) => ({
-  screen: "scenario",
+  screen: "home",
   selectedScenarioId: null,
   selectedModeId: null,
   phase: null,
@@ -88,9 +93,11 @@ export const useGame = create<GameState>((set, get) => ({
   dailyRecord: null,
   dailyStreak: 0,
   result: null,
+  formationId: "433",
 
   selectScenario: (id) => set({ selectedScenarioId: id }),
   selectMode: (id) => set({ selectedModeId: id }),
+  selectFormation: (id) => set({ formationId: id, slots: [...EMPTY_SLOTS], current: null }),
 
   startGame: () => {
     const { selectedScenarioId, selectedModeId } = get();
@@ -167,14 +174,15 @@ export const useGame = create<GameState>((set, get) => ({
   },
 
   runSimulation: () => {
-    const { slots, phase, mode, daily } = get();
+    const { slots, phase, mode, daily, formationId } = get();
     if (!phase || !mode || !slots.every(Boolean)) return;
     const cards = slots as Card[];
-    const result = simulate(cards, phase);
+    const activeSlots = getFormationSlots(formationId);
+    const result = simulate(cards, phase, activeSlots);
 
     if (daily) {
       const dateKey = getTodayKey();
-      const matched = cards.map((c, i) => affinityMatch(c, i));
+      const matched = cards.map((c, i) => affinityMatch(c, i, activeSlots));
       const record: DailyRecord = {
         date: dateKey,
         puzzle: getPuzzleNumber(dateKey),
@@ -218,6 +226,21 @@ export const useGame = create<GameState>((set, get) => ({
   goToScenarioSelect: () =>
     set({
       screen: "scenario",
+      selectedScenarioId: null,
+      selectedModeId: null,
+      phase: null,
+      mode: null,
+      current: null,
+      slots: [...EMPTY_SLOTS],
+      result: null,
+      daily: false,
+      drawCount: 0,
+      dailyRecord: null,
+    }),
+
+  goToHome: () =>
+    set({
+      screen: "home",
       selectedScenarioId: null,
       selectedModeId: null,
       phase: null,

@@ -1,15 +1,108 @@
-import type { Card, Category, GameMode, Scenario, Slot } from "./types";
+import type { Card, Category, FormationDef, GameMode, Scenario, Slot } from "./types";
 
-export const SLOTS: Slot[] = [
-  { id: 1, emoji: "🎯", nome: "Técnico / Comando", affinity: ["Lenda", "Reverso"] },
-  { id: 2, emoji: "👥", nome: "Convocação Surpresa", affinity: ["Meme"] },
-  { id: 3, emoji: "🧠", nome: "Preparação Psicológica", affinity: ["Balada", "Drama"] },
-  { id: 4, emoji: "📋", nome: "Mudança Escalação", affinity: ["Lenda"] },
-  { id: 5, emoji: "🔄", nome: "Substituição 2º Tempo", affinity: ["Reverso", "Drama"] },
+const COACH_DEF: Omit<Slot, "id"> = { emoji: "📋", abbr: "TEC", nome: "Técnico", affinity: ["Lenda", "Moda"] };
+const GK_DEF:    Omit<Slot, "id"> = { emoji: "🧤", abbr: "GOL", nome: "Goleiro", affinity: ["Lenda", "Drama"] };
+
+export const FORMATIONS: FormationDef[] = [
+  {
+    id: "433", label: "4-3-3",
+    outfield: [
+      { emoji: "🛡️", abbr: "LE",  nome: "Lateral Esq.",  affinity: ["Drama", "Reverso"]  },
+      { emoji: "🛡️", abbr: "ZAG", nome: "Zagueiro",      affinity: ["Drama"]              },
+      { emoji: "🛡️", abbr: "ZAG", nome: "Zagueiro",      affinity: ["Drama"]              },
+      { emoji: "🛡️", abbr: "LD",  nome: "Lateral Dir.",  affinity: ["Drama", "Reverso"]  },
+      { emoji: "⚡",  abbr: "ME",  nome: "Meia Esq.",     affinity: ["Reverso", "Balada"] },
+      { emoji: "⚡",  abbr: "VOL", nome: "Volante",       affinity: ["Drama", "Lenda"]    },
+      { emoji: "⚡",  abbr: "MD",  nome: "Meia Dir.",     affinity: ["Reverso", "Balada"] },
+      { emoji: "⚽",  abbr: "PE",  nome: "Ponta Esq.",    affinity: ["Balada", "Meme"]    },
+      { emoji: "⚽",  abbr: "CA",  nome: "Centroavante",  affinity: ["Lenda", "Balada"]   },
+      { emoji: "⚽",  abbr: "PD",  nome: "Ponta Dir.",    affinity: ["Balada", "Meme"]    },
+    ],
+    fieldRows: [[9, 10, 11], [6, 7, 8], [2, 3, 4, 5]],
+  },
+  {
+    id: "442", label: "4-4-2",
+    outfield: [
+      { emoji: "🛡️", abbr: "LE",  nome: "Lateral Esq.",  affinity: ["Drama", "Reverso"]  },
+      { emoji: "🛡️", abbr: "ZAG", nome: "Zagueiro",      affinity: ["Drama"]              },
+      { emoji: "🛡️", abbr: "ZAG", nome: "Zagueiro",      affinity: ["Drama"]              },
+      { emoji: "🛡️", abbr: "LD",  nome: "Lateral Dir.",  affinity: ["Drama", "Reverso"]  },
+      { emoji: "⚡",  abbr: "ALE", nome: "Ala Esq.",      affinity: ["Reverso", "Balada"] },
+      { emoji: "⚡",  abbr: "MCE", nome: "Meia Centro",   affinity: ["Lenda", "Reverso"]  },
+      { emoji: "⚡",  abbr: "MCD", nome: "Meia Centro",   affinity: ["Lenda", "Reverso"]  },
+      { emoji: "⚡",  abbr: "ALD", nome: "Ala Dir.",      affinity: ["Reverso", "Balada"] },
+      { emoji: "⚽",  abbr: "CA",  nome: "Centroavante",  affinity: ["Lenda", "Balada"]   },
+      { emoji: "⚽",  abbr: "CA",  nome: "Centroavante",  affinity: ["Lenda", "Balada"]   },
+    ],
+    fieldRows: [[10, 11], [6, 7, 8, 9], [2, 3, 4, 5]],
+  },
+  {
+    id: "4231", label: "4-2-3-1",
+    outfield: [
+      { emoji: "🛡️", abbr: "LE",  nome: "Lateral Esq.",  affinity: ["Drama", "Reverso"]  },
+      { emoji: "🛡️", abbr: "ZAG", nome: "Zagueiro",      affinity: ["Drama"]              },
+      { emoji: "🛡️", abbr: "ZAG", nome: "Zagueiro",      affinity: ["Drama"]              },
+      { emoji: "🛡️", abbr: "LD",  nome: "Lateral Dir.",  affinity: ["Drama", "Reverso"]  },
+      { emoji: "⚡",  abbr: "VOL", nome: "Volante",       affinity: ["Drama", "Lenda"]    },
+      { emoji: "⚡",  abbr: "VOL", nome: "Volante",       affinity: ["Drama", "Lenda"]    },
+      { emoji: "⚡",  abbr: "MEA", nome: "Meia Ata. Esq", affinity: ["Reverso", "Balada"] },
+      { emoji: "⚡",  abbr: "MAM", nome: "Meia Atacante", affinity: ["Balada", "Lenda"]   },
+      { emoji: "⚡",  abbr: "MAD", nome: "Meia Ata. Dir", affinity: ["Reverso", "Balada"] },
+      { emoji: "⚽",  abbr: "CA",  nome: "Centroavante",  affinity: ["Lenda", "Balada"]   },
+    ],
+    fieldRows: [[11], [8, 9, 10], [6, 7], [2, 3, 4, 5]],
+  },
+  {
+    id: "352", label: "3-5-2",
+    outfield: [
+      { emoji: "🛡️", abbr: "ZAG", nome: "Zagueiro",      affinity: ["Drama"]              },
+      { emoji: "🛡️", abbr: "ZAG", nome: "Zagueiro",      affinity: ["Drama"]              },
+      { emoji: "🛡️", abbr: "ZAG", nome: "Zagueiro",      affinity: ["Drama"]              },
+      { emoji: "⚡",  abbr: "ALE", nome: "Ala Esq.",      affinity: ["Reverso", "Balada"] },
+      { emoji: "⚡",  abbr: "MCE", nome: "Meia Centro",   affinity: ["Lenda", "Reverso"]  },
+      { emoji: "⚡",  abbr: "VOL", nome: "Volante",       affinity: ["Drama", "Lenda"]    },
+      { emoji: "⚡",  abbr: "MCD", nome: "Meia Centro",   affinity: ["Lenda", "Reverso"]  },
+      { emoji: "⚡",  abbr: "ALD", nome: "Ala Dir.",      affinity: ["Reverso", "Balada"] },
+      { emoji: "⚽",  abbr: "CA",  nome: "Centroavante",  affinity: ["Lenda", "Balada"]   },
+      { emoji: "⚽",  abbr: "CA",  nome: "Centroavante",  affinity: ["Lenda", "Balada"]   },
+    ],
+    fieldRows: [[10, 11], [5, 6, 7, 8, 9], [2, 3, 4]],
+  },
+  {
+    id: "532", label: "5-3-2",
+    outfield: [
+      { emoji: "🛡️", abbr: "ALE", nome: "Ala Defensivo",  affinity: ["Drama", "Reverso"]  },
+      { emoji: "🛡️", abbr: "ZAG", nome: "Zagueiro",       affinity: ["Drama"]              },
+      { emoji: "🛡️", abbr: "ZAG", nome: "Zagueiro",       affinity: ["Drama"]              },
+      { emoji: "🛡️", abbr: "ZAG", nome: "Zagueiro",       affinity: ["Drama"]              },
+      { emoji: "🛡️", abbr: "ALD", nome: "Ala Defensivo",  affinity: ["Drama", "Reverso"]  },
+      { emoji: "⚡",  abbr: "MCE", nome: "Meia Centro",    affinity: ["Lenda", "Reverso"]  },
+      { emoji: "⚡",  abbr: "VOL", nome: "Volante",        affinity: ["Drama", "Lenda"]    },
+      { emoji: "⚡",  abbr: "MCD", nome: "Meia Centro",    affinity: ["Lenda", "Reverso"]  },
+      { emoji: "⚽",  abbr: "CA",  nome: "Centroavante",   affinity: ["Lenda", "Balada"]   },
+      { emoji: "⚽",  abbr: "CA",  nome: "Centroavante",   affinity: ["Lenda", "Balada"]   },
+    ],
+    fieldRows: [[10, 11], [7, 8, 9], [2, 3, 4, 5, 6]],
+  },
 ];
 
+export function getFormationSlots(formationId: string): Slot[] {
+  const f = FORMATIONS.find((f) => f.id === formationId) ?? FORMATIONS[0];
+  return [
+    { id: 0, ...COACH_DEF },
+    { id: 1, ...GK_DEF },
+    ...f.outfield.map((s, i) => ({ id: i + 2, ...s })),
+  ];
+}
+
+/** Slots padrão (4-3-3) — mantido para compatibilidade com affinityMatch sem formação. */
+export const SLOTS = getFormationSlots("433");
+
+/** Soma máxima de overalls com 12 jogadores × 100. */
+export const MAX_BASE = SLOTS.length * 100;
+
 /** Bônus de overall ao encaixar uma carta num slot de categoria afim. */
-export const AFFINITY_BONUS = 12;
+export const AFFINITY_BONUS = 10;
 
 /** Emoji por categoria, usado nas dicas de afinidade. */
 export const CATEGORY_EMOJI: Record<Category, string> = {

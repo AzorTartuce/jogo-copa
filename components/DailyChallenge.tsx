@@ -62,22 +62,21 @@ export default function DailyChallenge() {
   };
 
   return (
-    <section className="rounded-2xl border border-brand/50 bg-gradient-to-br from-panel2 to-[#241f4f] p-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <section className="rounded-xl border border-brand/30 bg-green-50 p-5 dark:bg-green-950/20">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-xl font-bold">📅 Desafio Diário #{puzzle}</h2>
-          <p className="text-sm text-muted">
-            Mesmo cenário e mesmas cartas para todo mundo hoje. Uma jogada por dia!
+          <div className="flex items-center gap-1.5">
+            <span className="text-base">📅</span>
+            <h2 className="text-sm font-bold text-ink">Desafio Diário #{puzzle}</h2>
+          </div>
+          <p className="mt-0.5 text-xs text-muted">
+            Mesmo cenário para todo mundo hoje. Uma jogada por dia.
           </p>
         </div>
         {(streak > 0 || maxStreak > 0) && (
-          <div className="text-right text-sm text-muted">
-            <div>
-              🔥 Sequência: <b className="text-ink">{streak}</b>
-            </div>
-            <div>
-              🏅 Recorde: <b className="text-ink">{maxStreak}</b>
-            </div>
+          <div className="text-right text-xs text-muted">
+            <p>🔥 Sequência: <span className="font-semibold text-ink">{streak}</span></p>
+            <p>🏅 Recorde: <span className="font-semibold text-ink">{maxStreak}</span></p>
           </div>
         )}
       </div>
@@ -85,33 +84,33 @@ export default function DailyChallenge() {
       {!record ? (
         <button
           onClick={startDaily}
-          className="btn-brand mt-4 w-full rounded-xl px-5 py-3 font-bold transition hover:-translate-y-0.5 sm:w-auto"
+          className="btn-brand mt-3 rounded-lg px-4 py-2 text-sm font-semibold transition"
         >
-          ▶ Jogar Desafio de Hoje
+          ▶ Jogar desafio de hoje
         </button>
       ) : (
-        <div className="mt-4 rounded-xl border border-line bg-bg2/60 p-4">
+        <div className="mt-3 rounded-lg border border-line bg-panel p-4">
           <div className="text-center">
-            <div className="text-lg font-bold">
+            <p className="text-sm font-semibold text-ink">
               {record.win ? "✅ Você salvou a história!" : "❌ Não foi dessa vez"}
-            </div>
-            <div className="my-1 text-sm text-muted">
+            </p>
+            <p className="mt-0.5 text-xs text-muted">
               {record.scn} · {record.total} pts
-            </div>
-            <div className="my-2 text-3xl tracking-widest">{record.grid}</div>
+            </p>
+            <div className="my-2 text-2xl tracking-widest">{record.grid}</div>
             {record.combos.length > 0 && (
-              <div className="text-xs text-emerald-300">🔗 {record.combos.join(" · ")}</div>
+              <p className="text-xs text-green-600">🔗 {record.combos.join(" · ")}</p>
             )}
           </div>
           <div className="mt-3 flex flex-wrap items-center justify-center gap-3">
             <button
               onClick={share}
-              className="btn-brand rounded-xl px-5 py-2.5 font-bold transition hover:-translate-y-0.5"
+              className="btn-brand rounded-lg px-4 py-2 text-sm font-semibold transition"
             >
               📤 Compartilhar
             </button>
-            <span className="text-sm text-muted">
-              Próximo desafio em <b className="text-ink">{countdown}</b>
+            <span className="text-xs text-muted">
+              Próximo em <span className="font-medium text-ink">{countdown}</span>
             </span>
           </div>
         </div>

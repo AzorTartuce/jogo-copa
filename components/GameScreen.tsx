@@ -1,10 +1,13 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
+import { useState } from "react";
+import { FORMATIONS } from "@/lib/data";
 import { useGame } from "@/lib/store";
 import { useToast } from "@/lib/toast";
 import DrawCard from "./DrawCard";
-import SlotGrid from "./SlotGrid";
+import FieldGrid from "./FieldGrid";
+import SimulationCinema from "./SimulationCinema";
 
 export default function GameScreen() {
   const {
@@ -14,17 +17,26 @@ export default function GameScreen() {
     current,
     spinning,
     slots,
+    formationId,
     spin,
     reroll,
+    selectFormation,
     runSimulation,
     goToScenarioSelect,
   } = useGame();
   const toast = useToast((s) => s.show);
 
+  const [showCinema, setShowCinema] = useState(false);
+
   if (!phase || !mode) return null;
 
-  const filled = slots.filter(Boolean).length;
-  const allFilled = filled === 5;
+  const filled    = slots.filter(Boolean).length;
+  const allFilled = filled === 12;
+
+  const handleSimulate = () => {
+    if (!allFilled) return;
+    setShowCinema(true);
+  };
 
   const handleReroll = () => {
     if (rerolls <= 0 || !current) return;
@@ -32,86 +44,140 @@ export default function GameScreen() {
     toast(`Reroll usado! Restam ${rerolls - 1}`);
   };
 
+  const activeFormation = FORMATIONS.find((f) => f.id === formationId) ?? FORMATIONS[0];
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-4"
-    >
-      <section className="rounded-2xl border border-line bg-panel p-5">
-        <div className="flex flex-wrap items-start justify-between gap-3">
+    <>
+      <AnimatePresence>
+        {showCinema && (
+          <SimulationCinema
+            flag={phase.flag}
+            sel={phase.sel}
+            adv={phase.adv}
+            onDone={() => {
+              setShowCinema(false);
+              runSimulation();
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      <motion.div
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="space-y-4"
+      >
+        {/* ── Barra do cenário ─────────────────────────────────────── */}
+        <section className="flex flex-wrap items-start justify-between gap-3 rounded-xl border border-line bg-panel p-4 shadow-sm">
           <div>
-            <h2 className="text-lg font-bold sm:text-xl">
+            <h2 className="text-base font-bold text-ink sm:text-lg">
               {phase.flag} {phase.sel} {phase.ano} — {phase.nome}
             </h2>
-            <p className="text-sm text-muted">Desafio: {phase.desafio}</p>
+            <p className="mt-0.5 text-sm text-muted">{phase.desafio}</p>
           </div>
           <button
             onClick={goToScenarioSelect}
-            className="rounded-xl border border-line px-3.5 py-2 text-sm transition hover:border-brand"
+            className="rounded-lg border border-line bg-bg2 px-3 py-1.5 text-sm text-muted transition hover:border-slate-400 hover:text-ink"
           >
-            ↩ Trocar Cenário
+            ← Trocar cenário
           </button>
+        </section>
+
+        {/* ── Layout side-by-side ──────────────────────────────────── */}
+        <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2">
+
+          {/* ── Esquerda: carta + controles ─────────────────────────── */}
+          <section className="rounded-xl border border-line bg-panel p-4 shadow-sm">
+            {/* Stats compactos */}
+            <div className="mb-3 grid grid-cols-2 gap-x-4 gap-y-1 text-sm text-muted">
+              <span>Modo: <span className="font-medium text-ink">{mode.nome}</span></span>
+              <span>Rerolls: <span className="font-medium text-ink">{rerolls}</span></span>
+              <span>Jogadores: <span className="font-medium text-ink">{filled}/12</span></span>
+              <span>Resistência: <span className="font-medium text-ink">{phase.diff}</span></span>
+            </div>
+
+            <DrawCard />
+
+            <div className="flex flex-wrap justify-center gap-3">
+              <button
+                onClick={spin}
+                disabled={allFilled || spinning || !!current}
+                className="btn-brand rounded-lg px-5 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                🎰 Girar a Máquina
+              </button>
+              <button
+                onClick={handleReroll}
+                disabled={rerolls <= 0 || !current || spinning}
+                className="rounded-lg border border-line bg-bg2 px-5 py-2.5 text-sm font-semibold transition hover:border-slate-400 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                🔄 Reroll ({rerolls})
+              </button>
+            </div>
+
+            <p className="mt-3 text-center text-xs text-muted">
+              {allFilled
+                ? "Escalação completa — inicie a simulação!"
+                : current
+                  ? "Clique numa posição no campo à direita. Verde = afinidade (+10)."
+                  : "Gire para sortear uma carta e encaixe na posição certa."}
+            </p>
+
+            {/* Botão de simulação — visível na coluna esquerda em desktop */}
+            <div className="mt-4 hidden justify-center md:flex">
+              <button
+                onClick={handleSimulate}
+                disabled={!allFilled}
+                className="btn-brand w-full rounded-lg py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                🏟️ Iniciar Simulação
+              </button>
+            </div>
+          </section>
+
+          {/* ── Direita: campo ──────────────────────────────────────── */}
+          <section className="rounded-xl border border-line bg-panel p-4 shadow-sm">
+            {/* Seletor de formação */}
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-muted">
+                {activeFormation.label}
+              </h2>
+              <div className="flex flex-wrap gap-1.5">
+                {FORMATIONS.map((f) => (
+                  <button
+                    key={f.id}
+                    onClick={() => {
+                      if (f.id === formationId) return;
+                      if (slots.some(Boolean)) toast("Formação alterada — escalação resetada.");
+                      selectFormation(f.id);
+                    }}
+                    className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
+                      f.id === formationId
+                        ? "bg-brand text-white shadow-sm"
+                        : "border border-line bg-bg2 text-muted hover:border-brand/60 hover:text-ink"
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <FieldGrid />
+          </section>
         </div>
-      </section>
 
-      <section className="rounded-2xl border border-line bg-panel p-5">
-        <div className="mb-2 flex flex-wrap justify-center gap-x-6 gap-y-1 text-sm text-muted">
-          <span>
-            Modo: <b className="text-ink">{mode.nome}</b>
-          </span>
-          <span>
-            Rerolls: <b className="text-ink">{rerolls}</b>
-          </span>
-          <span>
-            Slots: <b className="text-ink">{filled}</b>/5
-          </span>
-          <span>
-            Resistência: <b className="text-ink">{phase.diff}</b>
-          </span>
-        </div>
-
-        <DrawCard />
-
-        <div className="flex flex-wrap justify-center gap-3">
+        {/* Botão de simulação — apenas em mobile (escondido em md+) */}
+        <div className="flex justify-center md:hidden">
           <button
-            onClick={spin}
-            disabled={allFilled || spinning || !!current}
-            className="btn-brand rounded-xl px-5 py-3 font-bold transition hover:-translate-y-0.5 disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-40"
+            onClick={handleSimulate}
+            disabled={!allFilled}
+            className="btn-brand w-full rounded-lg py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-40"
           >
-            🎰 Girar a Máquina do Tempo
-          </button>
-          <button
-            onClick={handleReroll}
-            disabled={rerolls <= 0 || !current || spinning}
-            className="rounded-xl border border-line px-5 py-3 font-bold transition hover:border-brand disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            🔄 Reroll ({rerolls})
+            🏟️ Iniciar Simulação
           </button>
         </div>
-        <p className="mt-2.5 text-center text-[13px] text-muted">
-          {allFilled
-            ? "Todos os slots preenchidos! Inicie a simulação."
-            : current
-              ? "Encaixe num slot vazio — slots em verde dão bônus de afinidade (+12). Ou use um Reroll."
-              : "Sorteie uma carta e encaixe no slot certo para ganhar bônus de afinidade e combos."}
-        </p>
-      </section>
-
-      <section className="rounded-2xl border border-line bg-panel p-5">
-        <h2 className="mb-4 text-xl font-bold">🎯 Linha do Tempo — 5 Slots</h2>
-        <SlotGrid />
-      </section>
-
-      <div className="flex justify-center">
-        <button
-          onClick={runSimulation}
-          disabled={!allFilled}
-          className="btn-brand rounded-xl px-6 py-3.5 text-base font-bold transition hover:-translate-y-0.5 disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          🏟️ Iniciar Simulação
-        </button>
-      </div>
-    </motion.div>
+      </motion.div>
+    </>
   );
 }

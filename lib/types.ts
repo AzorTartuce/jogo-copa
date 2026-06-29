@@ -46,9 +46,19 @@ export interface GameMode {
 export interface Slot {
   id: number;
   emoji: string;
+  /** Abreviação exibida no campo (ex: "GOL", "ZAG", "CA"). */
+  abbr: string;
   nome: string;
   /** Categorias que recebem bônus de afinidade neste slot. */
   affinity: Category[];
+}
+
+export interface FormationDef {
+  id: string;
+  label: string;
+  outfield: Array<Omit<Slot, "id">>;
+  /** Índices dos slots (2-11) agrupados por linha visual (topo=ataque). */
+  fieldRows: number[][];
 }
 
 export type Tier = 1 | 2 | 3 | 4 | 5;

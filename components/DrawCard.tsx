@@ -2,7 +2,14 @@
 
 import { motion } from "framer-motion";
 import { useGame } from "@/lib/store";
-import { TIER_COLOR, TIER_LABEL, ovTier } from "@/lib/utils";
+import {
+  CAT_BG,
+  TIER_BORDER,
+  TIER_COLOR,
+  TIER_LABEL,
+  ovTier,
+  playerAvatarUrl,
+} from "@/lib/utils";
 
 export default function DrawCard() {
   const { current, spinning, slots } = useGame();
@@ -10,38 +17,67 @@ export default function DrawCard() {
 
   if (!current) {
     return (
-      <div className="my-4 flex min-h-[170px] flex-col justify-center gap-2 rounded-2xl border border-brand bg-gradient-to-br from-panel2 to-[#252f4f] p-6 text-center">
-        <div className="text-5xl">🕰️</div>
-        <p className="mx-auto max-w-md text-sm text-muted">
+      <div className="my-4 flex min-h-[160px] flex-col items-center justify-center gap-3 rounded-xl border border-line bg-bg2 text-center">
+        <span className="text-3xl opacity-40">🕰️</span>
+        <p className="max-w-xs text-sm text-muted">
           {allFilled
-            ? "Todos os slots preenchidos! Inicie a simulação abaixo."
-            : "Clique em Girar a Máquina do Tempo para sortear uma Intervenção Temporal."}
+            ? "Todos os slots preenchidos. Inicie a simulação."
+            : "Clique em Girar para sortear uma Intervenção Temporal."}
         </p>
       </div>
     );
   }
 
   const tier = ovTier(current.ov);
+  const avatarUrl = playerAvatarUrl(current.jogador);
 
   return (
     <motion.div
       key={`${current.id}-${current.ov}-${spinning}`}
-      initial={{ rotateY: spinning ? -90 : 0, opacity: spinning ? 0.3 : 1, scale: 0.95 }}
-      animate={{ rotateY: 0, opacity: 1, scale: 1 }}
-      transition={{ duration: 0.45, ease: "easeOut" }}
-      className="my-4 flex min-h-[170px] flex-col justify-center gap-1.5 rounded-2xl border border-brand bg-gradient-to-br from-panel2 to-[#252f4f] p-6 text-center"
+      initial={{ opacity: spinning ? 0.2 : 1, y: spinning ? 6 : 0, scale: 0.97 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.35, ease: "easeOut" }}
+      className={`my-4 overflow-hidden rounded-xl border-2 bg-panel shadow-sm ${TIER_BORDER[tier]}`}
     >
-      <div className="text-4xl">{current.emoji}</div>
-      <div className="text-xs font-semibold uppercase tracking-widest text-brand">
-        {current.cat} · {TIER_LABEL[tier]}
+      {/* Cabeçalho com avatar */}
+      <div className={`relative flex flex-col items-center gap-2 bg-gradient-to-b ${CAT_BG[current.cat]} px-4 pb-4 pt-5`}>
+        <span
+          className={`absolute right-3 top-3 rounded-full bg-white/70 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${TIER_COLOR[tier]}`}
+        >
+          {TIER_LABEL[tier]}
+        </span>
+
+        <div className="relative">
+          <div className={`h-20 w-20 overflow-hidden rounded-full border-2 bg-white ${TIER_BORDER[tier]}`}>
+            <img
+              src={avatarUrl}
+              alt={current.jogador}
+              className="h-full w-full object-cover"
+              loading="lazy"
+            />
+          </div>
+          <span className="absolute -bottom-1 -right-1 rounded-full bg-white px-1 py-0.5 text-sm shadow-sm">
+            {current.emoji}
+          </span>
+        </div>
+
+        <div className="text-center">
+          <p className="text-base font-bold text-slate-800">{current.jogador}</p>
+          <p className="text-xs text-slate-500">{current.cat}</p>
+        </div>
       </div>
-      <div className="text-xl font-extrabold">
-        {current.jogador} — {current.poder}
-      </div>
-      <div className="mx-auto max-w-lg text-sm text-muted">{current.desc}</div>
-      <div className={`text-4xl font-black ${TIER_COLOR[tier]}`}>{current.ov}</div>
-      <div className="meter mx-auto mt-1 w-full max-w-xs">
-        <i style={{ width: `${current.ov}%` }} />
+
+      {/* Corpo */}
+      <div className="flex flex-col items-center gap-2 px-5 py-4 text-center">
+        <p className="text-sm font-semibold text-brand">{current.poder}</p>
+        <p className="text-sm text-muted">{current.desc}</p>
+
+        <div className={`mt-1 text-4xl font-black ${TIER_COLOR[tier]}`}>{current.ov}</div>
+        <p className="text-[10px] uppercase tracking-widest text-muted">Overall</p>
+
+        <div className="meter w-full max-w-xs">
+          <i style={{ width: `${current.ov}%` }} />
+        </div>
       </div>
     </motion.div>
   );
