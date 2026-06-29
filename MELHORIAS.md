@@ -140,4 +140,4 @@ Se for fazer só 3 coisas, na ordem:
 
 > Resumo: o jogo está bem estruturado tecnicamente, mas hoje é **90% sorte**.
 > Adicionar **decisão estratégica** (slots que importam) e **gancho viral**
-> (desafio diário compartilhável) é o caminho de protótipo → sucesso.
+> (desafio diário compartilhável) é o caminho de protótipo → sucesso
