@@ -142,24 +142,30 @@ export default function GameScreen() {
               <h2 className="text-sm font-semibold uppercase tracking-wider text-muted">
                 {activeFormation.label}
               </h2>
-              <div className="flex flex-wrap gap-1.5">
-                {FORMATIONS.map((f) => (
-                  <button
-                    key={f.id}
-                    onClick={() => {
-                      if (f.id === formationId) return;
-                      if (slots.some(Boolean)) toast("Formação alterada — escalação resetada.");
-                      selectFormation(f.id);
-                    }}
-                    className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
-                      f.id === formationId
-                        ? "bg-brand text-white shadow-sm"
-                        : "border border-line bg-bg2 text-muted hover:border-brand/60 hover:text-ink"
-                    }`}
-                  >
-                    {f.label}
-                  </button>
-                ))}
+              <div className="flex flex-wrap items-center gap-1.5">
+                {FORMATIONS.map((f) => {
+                  const locked = slots.some(Boolean) && f.id !== formationId;
+                  return (
+                    <button
+                      key={f.id}
+                      disabled={locked}
+                      onClick={() => selectFormation(f.id)}
+                      title={locked ? "Remova os jogadores para trocar de formação" : f.label}
+                      className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
+                        f.id === formationId
+                          ? "bg-brand text-white shadow-sm"
+                          : locked
+                            ? "cursor-not-allowed border border-line bg-bg2 text-muted opacity-30"
+                            : "border border-line bg-bg2 text-muted hover:border-brand/60 hover:text-ink"
+                      }`}
+                    >
+                      {f.label}
+                    </button>
+                  );
+                })}
+                {slots.some(Boolean) && (
+                  <span className="text-[10px] text-muted">🔒</span>
+                )}
               </div>
             </div>
 

@@ -1,5 +1,6 @@
 "use client";
 
+import Footer from "@/components/Footer";
 import GameScreen from "@/components/GameScreen";
 import HomeScreen from "@/components/HomeScreen";
 import ResultScreen from "@/components/ResultScreen";
@@ -46,9 +47,7 @@ export default function Home() {
       {screen === "game"     && <GameScreen />}
       {screen === "result"   && <ResultScreen />}
 
-      <footer className="mt-12 border-t border-line pt-6 text-center text-xs text-muted">
-        Máquina do Tempo do Futebol · Next.js + React + Tailwind
-      </footer>
+      <Footer />
 
       <Toast />
     </main>

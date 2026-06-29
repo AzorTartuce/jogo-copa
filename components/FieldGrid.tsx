@@ -19,6 +19,49 @@ interface CellProps {
   onClick: (i: number) => void;
 }
 
+// Cor de fundo por categoria — usada nos chips de afinidade
+const CAT_CHIP: Record<string, string> = {
+  Balada:  "bg-violet-500/70",
+  Drama:   "bg-rose-500/70",
+  Moda:    "bg-blue-500/70",
+  Meme:    "bg-yellow-500/70",
+  Lenda:   "bg-amber-500/70",
+  Reverso: "bg-cyan-500/70",
+};
+
+function AffinityChips({
+  affinity,
+  current,
+  compact = false,
+}: {
+  affinity: string[];
+  current: Card | null;
+  compact?: boolean;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-0.5">
+      {affinity.map((cat) => {
+        const isMatch = !!current && current.cat === cat;
+        return (
+          <span
+            key={cat}
+            className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 font-semibold leading-none transition-all ${
+              compact ? "text-[7px]" : "text-[8px]"
+            } ${
+              isMatch
+                ? "scale-105 bg-green-500 text-white shadow"
+                : `${CAT_CHIP[cat] ?? "bg-white/10"} text-white/70`
+            }`}
+          >
+            <span>{CATEGORY_EMOJI[cat as keyof typeof CATEGORY_EMOJI]}</span>
+            <span>{cat.slice(0, 3)}</span>
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
 function SlotCell({ slotIdx, card, slot, current, activeSlots, onClick }: CellProps) {
   const willMatch   = !card && !!current && affinityMatch(current, slotIdx, activeSlots);
   const targetable  = !card && !!current;
@@ -37,34 +80,27 @@ function SlotCell({ slotIdx, card, slot, current, activeSlots, onClick }: CellPr
   return (
     <motion.button
       layout
+      title={`${slot.nome} — afinidade: ${slot.affinity.join(", ")}`}
       onClick={() => onClick(slotIdx)}
       disabled={!!card}
       whileHover={!card ? { scale: 1.07 } : {}}
       whileTap={!card ? { scale: 0.94 } : {}}
       className={`relative flex w-[72px] flex-col items-center gap-1 rounded-xl p-2 transition focus:outline-none ${ringCls}`}
     >
-      {/* Afinidade badge */}
+      {/* Badge topo-direita */}
       {willMatch && (
         <span className="absolute -right-1.5 -top-2 z-10 rounded-full bg-green-500 px-1.5 py-px text-[9px] font-bold leading-none text-white shadow">
           +10
         </span>
       )}
       {placedMatch && (
-        <span className="absolute -right-1.5 -top-2 z-10 rounded-full bg-green-500 px-1 py-px text-[9px] font-bold leading-none text-white shadow">
-          ✨
-        </span>
+        <span className="absolute -right-1.5 -top-2 z-10 text-sm leading-none">✨</span>
       )}
 
-      {/* Avatar / placeholder */}
       {card ? (
         <>
           <div className="relative h-11 w-11 overflow-hidden rounded-full border-2 border-white/50 bg-white/10 shadow">
-            <img
-              src={playerAvatarUrl(card.jogador)}
-              alt={card.jogador}
-              className="h-full w-full"
-              loading="lazy"
-            />
+            <img src={playerAvatarUrl(card.jogador)} alt={card.jogador} className="h-full w-full" loading="lazy" />
           </div>
           <span className={`text-xs font-black leading-none ${TIER_COLOR[ovTier(card.ov)]}`}>
             {card.ov}
@@ -72,15 +108,25 @@ function SlotCell({ slotIdx, card, slot, current, activeSlots, onClick }: CellPr
           <span className="max-w-[64px] truncate text-center text-[9px] font-semibold leading-tight text-white/90">
             {card.jogador.split(" ")[0]}
           </span>
+          {/* Bônus ativo */}
+          {placedMatch && (
+            <span className="rounded-full bg-green-500/80 px-1.5 py-px text-[7px] font-bold leading-none text-white">
+              +10
+            </span>
+          )}
         </>
       ) : (
         <>
-          <div className="flex h-11 w-11 items-center justify-center rounded-full border border-dashed border-white/20 bg-white/5">
-            <span className="text-xs font-bold text-white/40">{slot.abbr}</span>
+          {/* Círculo da posição */}
+          <div className="flex h-11 w-11 flex-col items-center justify-center rounded-full border border-dashed border-white/25 bg-white/5">
+            <span className="text-[11px] font-black text-white/65">{slot.abbr}</span>
           </div>
-          <span className="text-[8px] leading-tight text-white/30">
-            {slot.affinity.map((c) => CATEGORY_EMOJI[c]).join("")}
+          {/* Nome da posição */}
+          <span className="line-clamp-1 max-w-[68px] text-center text-[8px] leading-none text-white/40">
+            {slot.nome}
           </span>
+          {/* Chips de afinidade */}
+          <AffinityChips affinity={slot.affinity} current={current} />
         </>
       )}
     </motion.button>
@@ -192,11 +238,16 @@ export default function FieldGrid() {
             <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border-2 border-line bg-bg2">
               <img src={playerAvatarUrl(coachCard.jogador)} alt={coachCard.jogador} className="h-full w-full" loading="lazy" />
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="truncate text-xs font-bold text-ink">{coachCard.jogador}</p>
               <p className="truncate text-[10px] text-muted">{coachCard.poder}</p>
               <p className={`text-sm font-black ${TIER_COLOR[ovTier(coachCard.ov)]}`}>OV {coachCard.ov}</p>
             </div>
+            {coachPlacedMatch && (
+              <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700 dark:bg-green-900/40 dark:text-green-400">
+                +10 bônus
+              </span>
+            )}
           </>
         ) : (
           <>
@@ -204,10 +255,26 @@ export default function FieldGrid() {
               📋
             </div>
             <div>
-              <p className="text-xs font-semibold text-ink">Banco — {coachSlot.nome}</p>
-              <p className="text-[10px] text-muted">
-                Afinidade: {coachSlot.affinity.map((c) => CATEGORY_EMOJI[c]).join(" ")}
-              </p>
+              <p className="text-xs font-semibold text-ink">Técnico</p>
+              <p className="mt-0.5 text-[10px] text-muted">Afinidade:</p>
+              <div className="mt-1 flex gap-1">
+                {coachSlot.affinity.map((cat) => {
+                  const isMatch = !!current && current.cat === cat;
+                  return (
+                    <span
+                      key={cat}
+                      className={`inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[9px] font-semibold leading-none transition-all ${
+                        isMatch
+                          ? "bg-green-500 text-white shadow"
+                          : `${CAT_CHIP[cat] ?? "bg-muted/20"} text-white/80 dark:text-white/70`
+                      }`}
+                    >
+                      {CATEGORY_EMOJI[cat as keyof typeof CATEGORY_EMOJI]}
+                      <span>{cat}</span>
+                    </span>
+                  );
+                })}
+              </div>
             </div>
           </>
         )}
