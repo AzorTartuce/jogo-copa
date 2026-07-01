@@ -77,6 +77,24 @@ function randomDraw(chaos: boolean): Card {
   return card;
 }
 
+/**
+ * Sorteia uma carta que ainda não esteja escalada no time, evitando jogadores
+ * repetidos. Retorna também o próximo `drawCount` (no diário cada tentativa
+ * avança o giro determinístico para manter a reprodutibilidade).
+ */
+function drawUnique(s: GameState): { card: Card; drawCount: number } {
+  const used = new Set(s.slots.filter(Boolean).map((c) => (c as Card).id));
+  let n = s.drawCount;
+  let card: Card;
+  let attempts = 0;
+  do {
+    card = s.daily ? dailyDraw(s.seed, n) : randomDraw(s.mode!.chaos);
+    n++;
+    attempts++;
+  } while (used.has(card.id) && attempts < 500);
+  return { card, drawCount: s.daily ? n : s.drawCount };
+}
+
 export const useGame = create<GameState>((set, get) => ({
   screen: "home",
   selectedScenarioId: null,
@@ -142,11 +160,11 @@ export const useGame = create<GameState>((set, get) => ({
     const s = get();
     if (!s.mode || s.spinning || s.current) return;
     if (s.slots.every(Boolean)) return;
-    const card = s.daily ? dailyDraw(s.seed, s.drawCount) : randomDraw(s.mode.chaos);
+    const { card, drawCount } = drawUnique(s);
     set({
       spinning: true,
       current: card,
-      drawCount: s.daily ? s.drawCount + 1 : s.drawCount,
+      drawCount,
     });
     setTimeout(() => set({ spinning: false }), 600);
   },
@@ -154,12 +172,12 @@ export const useGame = create<GameState>((set, get) => ({
   reroll: () => {
     const s = get();
     if (s.rerolls <= 0 || !s.current || !s.mode || s.spinning) return;
-    const card = s.daily ? dailyDraw(s.seed, s.drawCount) : randomDraw(s.mode.chaos);
+    const { card, drawCount } = drawUnique(s);
     set({
       rerolls: s.rerolls - 1,
       spinning: true,
       current: card,
-      drawCount: s.daily ? s.drawCount + 1 : s.drawCount,
+      drawCount,
     });
     setTimeout(() => set({ spinning: false }), 600);
   },
